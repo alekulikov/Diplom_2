@@ -1,5 +1,6 @@
 package ru.yandex;
 
+import io.qameta.allure.Step;
 import io.restassured.response.ValidatableResponse;
 import ru.yandex.model.*;
 
@@ -9,108 +10,95 @@ public class UserClient extends BaseRestClient {
 
     private String accessToken;
 
+    @Step("Создаем пользователя")
     public ValidatableResponse createUser(CreateUserRequest request) {
         return given()
                 .spec(getBaseSpec())
                 .body(request)
-                .log().all(true)
                 .when()
                 .post("api/auth/register")
-                .then()
-                .log().all(true);
+                .then();
     }
 
+    @Step("Авторизуемся пользователем")
     public ValidatableResponse loginUser(LoginUserRequest request) {
         return given()
                 .spec(getBaseSpec())
                 .body(request)
-                .log().all(true)
                 .when()
                 .post("api/auth/login")
-                .then()
-                .log().all(true);
+                .then();
     }
 
+    @Step("Получаем заказы пользователя")
     public ValidatableResponse getUsersOrders() {
         return accessToken != null
                 ? given()
                 .spec(getBaseSpec())
                 .auth().oauth2(this.accessToken)
-                .log().all(true)
                 .when()
                 .get("api/orders")
                 .then()
-                .log().all(true)
                 : given()
                 .spec(getBaseSpec())
-                .log().all(true)
                 .when()
                 .get("api/orders")
-                .then()
-                .log().all(true);
+                .then();
     }
 
+    @Step("Обновляем данные пользователя")
     public ValidatableResponse updateUserDate(UpdateUserRequest request) {
         return accessToken != null
                 ? given()
                 .spec(getBaseSpec())
                 .auth().oauth2(this.accessToken)
                 .body(request)
-                .log().all(true)
                 .when()
                 .patch("api/auth/user")
                 .then()
-                .log().all(true)
                 : given()
                 .spec(getBaseSpec())
                 .body(request)
-                .log().all(true)
                 .when()
                 .patch("api/auth/user")
-                .then()
-                .log().all(true);
+                .then();
     }
 
+    @Step("Удаляем пользователя")
     public ValidatableResponse deleteUser() {
         return accessToken != null
                 ? given()
                 .spec(getBaseSpec())
                 .auth().oauth2(this.accessToken)
-                .log().all(true)
                 .when()
                 .delete("api/auth/user")
                 .then()
-                .log().all(true)
                 : given()
                 .spec(getBaseSpec())
-                .log().all(true)
                 .when()
                 .delete("api/auth/user")
-                .then()
-                .log().all(true);
+                .then();
     }
 
+    @Step("Создаем заказ")
     public ValidatableResponse createOrder(CreateOrderRequest request) {
         return accessToken != null
                 ? given()
                 .spec(getBaseSpec())
                 .auth().oauth2(this.accessToken)
                 .body(request)
-                .log().all(true)
                 .when()
                 .post("api/orders")
                 .then()
-                .log().all(true)
                 : given()
                 .spec(getBaseSpec())
                 .body(request)
-                .log().all(true)
                 .when()
                 .post("api/orders")
-                .then()
-                .log().all(true);
+                .then();
     }
 
+    @Step("Получаем токен")
     public boolean getAccessToken(ValidatableResponse response) {
         try {
             this.accessToken = response.extract().path("accessToken").toString().substring(7);
@@ -121,6 +109,7 @@ public class UserClient extends BaseRestClient {
 
     }
 
+    @Step("Очищаем токен")
     public void flushAccessToken() {
         this.accessToken = null;
     }

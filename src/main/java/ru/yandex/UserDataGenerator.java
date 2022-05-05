@@ -11,7 +11,7 @@ public class UserDataGenerator {
         return getRandom(10, 10, 10);
     }
 
-    @Step("Готовим новые данные для создания курьера")
+    @Step("Готовим новые данные для создания пользователя")
     public static UserData getRandom(int lengthEmail, int lengthPassword, int lengthName) {
         String email = RandomStringUtils.randomAlphabetic(lengthEmail) + "@yandex.ru";
         String password = RandomStringUtils.randomAlphabetic(lengthPassword);

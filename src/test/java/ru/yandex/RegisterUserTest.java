@@ -43,6 +43,7 @@ public class RegisterUserTest {
     public void courierMustBeUnique() {
         client.getAccessToken(client.createUser(new CreateUserRequest(user)));
         ValidatableResponse repeatCreateResponse = client.createUser(new CreateUserRequest(user));
+        client.getAccessToken(repeatCreateResponse);
 
         checkStatusCode(repeatCreateResponse, 403);
         parameterEqualsTo(repeatCreateResponse, "success", false);
@@ -54,7 +55,7 @@ public class RegisterUserTest {
     public void userCannotCreatedWithoutPassword() {
         user.setPassword(null);
         ValidatableResponse createResponse = client.createUser(new CreateUserRequest(user));
-        client.getAccessToken(client.createUser(new CreateUserRequest(user)));
+        client.getAccessToken(createResponse);
 
         checkStatusCode(createResponse, 403);
         parameterEqualsTo(createResponse, "success", false);
@@ -66,7 +67,7 @@ public class RegisterUserTest {
     public void userCannotCreatedWithoutEmail() {
         user.setEmail(null);
         ValidatableResponse createResponse = client.createUser(new CreateUserRequest(user));
-        client.getAccessToken(client.createUser(new CreateUserRequest(user)));
+        client.getAccessToken(createResponse);
 
         checkStatusCode(createResponse, 403);
         parameterEqualsTo(createResponse, "success", false);
@@ -78,7 +79,7 @@ public class RegisterUserTest {
     public void userCannotCreatedWithoutName() {
         user.setName(null);
         ValidatableResponse createResponse = client.createUser(new CreateUserRequest(user));
-        client.getAccessToken(client.createUser(new CreateUserRequest(user)));
+        client.getAccessToken(createResponse);
 
         checkStatusCode(createResponse, 403);
         parameterEqualsTo(createResponse, "success", false);
