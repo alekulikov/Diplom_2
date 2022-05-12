@@ -5,6 +5,10 @@ import io.restassured.response.ValidatableResponse;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import ru.yandex.api.OrderOperations;
+import ru.yandex.api.UserAuthentication;
+import ru.yandex.api.UserCreator;
+import ru.yandex.api.UserUpdater;
 import ru.yandex.model.CreateOrderRequest;
 import ru.yandex.model.CreateUserRequest;
 import ru.yandex.model.LoginUserRequest;
@@ -18,27 +22,33 @@ import static ru.yandex.Steps.parameterEqualsTo;
 @DisplayName("Создание заказа")
 public class CreateOrderTest {
 
-    UserClient client;
-    UserData user;
+    UserCreator user;
+    UserAuthentication authentication;
+    UserUpdater userUpdater;
+    OrderOperations orderOperations;
+    UserData userData;
 
     @Before
     public void setUp() {
-        client = new UserClient();
-        user = UserDataGenerator.getRandom();
-        client.getAccessToken(client.createUser(new CreateUserRequest(user)));
+        userData = UserDataGenerator.getRandom();
+        user = new UserCreator();
+        user.createUser(new CreateUserRequest(userData));
+        authentication = new UserAuthentication();
+        authentication.loginUser(new LoginUserRequest(userData));
+        orderOperations = new OrderOperations();
     }
 
     @After
     public void tearDown() {
-        client.getAccessToken(client.loginUser(new LoginUserRequest(user)));
-        client.deleteUser();
+        userUpdater = new UserUpdater();
+        userUpdater.deleteUser(authentication.getAccessToken());
     }
 
     @Test
     @DisplayName("Пользователь может создать заказ")
     public void orderCanBeCreated() {
-        ValidatableResponse createOrderResponse = client.createOrder(new CreateOrderRequest(List.of(
-                "61c0c5a71d1f82001bdaaa6d", "61c0c5a71d1f82001bdaaa74")));
+        ValidatableResponse createOrderResponse = orderOperations.createOrder(new CreateOrderRequest(List.of(
+                "61c0c5a71d1f82001bdaaa6d", "61c0c5a71d1f82001bdaaa74")), authentication.getAccessToken());
 
         checkStatusCode(createOrderResponse, 200);
         parameterEqualsTo(createOrderResponse, "success", true);
@@ -47,9 +57,8 @@ public class CreateOrderTest {
     @Test
     @DisplayName("Заказ может быть создан без токена")
     public void orderCanBeCreatedWithoutToken() {
-        client.flushAccessToken();
-        ValidatableResponse createOrderResponse = client.createOrder(new CreateOrderRequest(List.of(
-                "61c0c5a71d1f82001bdaaa6d", "61c0c5a71d1f82001bdaaa74")));
+        ValidatableResponse createOrderResponse = orderOperations.createOrder(new CreateOrderRequest(List.of(
+                "61c0c5a71d1f82001bdaaa6d", "61c0c5a71d1f82001bdaaa74")), null);
 
         checkStatusCode(createOrderResponse, 200);
         parameterEqualsTo(createOrderResponse, "success", true);
@@ -58,7 +67,8 @@ public class CreateOrderTest {
     @Test
     @DisplayName("Заказ не может быть создан без ингредиентов")
     public void orderCanNotBeCreatedWithoutIngredients() {
-        ValidatableResponse createOrderResponse = client.createOrder(new CreateOrderRequest(List.of()));
+        ValidatableResponse createOrderResponse = orderOperations.createOrder(new CreateOrderRequest(List.of()),
+                authentication.getAccessToken());
 
         checkStatusCode(createOrderResponse, 400);
         parameterEqualsTo(createOrderResponse, "success", false);
@@ -68,8 +78,8 @@ public class CreateOrderTest {
     @Test
     @DisplayName("Заказ не может быть создан с неверным хэшем ингредиентов")
     public void orderCanNotBeCreatedWithIncorrectIngredientsHash() {
-        ValidatableResponse createOrderResponse = client.createOrder(new CreateOrderRequest(List.of(
-                "_61c0c5a71d1f82001bdaaa6d", "61c0c5a71d1f82001bdaaa74_")));
+        ValidatableResponse createOrderResponse = orderOperations.createOrder(new CreateOrderRequest(List.of(
+                "_61c0c5a71d1f82001bdaaa6d", "61c0c5a71d1f82001bdaaa74_")), authentication.getAccessToken());
 
         checkStatusCode(createOrderResponse, 500);
     }

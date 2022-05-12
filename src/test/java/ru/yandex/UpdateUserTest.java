@@ -7,7 +7,11 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
+import ru.yandex.api.UserAuthentication;
+import ru.yandex.api.UserCreator;
+import ru.yandex.api.UserUpdater;
 import ru.yandex.model.CreateUserRequest;
+import ru.yandex.model.LoginUserRequest;
 import ru.yandex.model.UpdateUserRequest;
 import ru.yandex.model.UserData;
 
@@ -21,8 +25,11 @@ import static ru.yandex.Steps.parameterEqualsTo;
 @DisplayName("Обновление данных пользователя")
 public class UpdateUserTest {
 
-    UserClient client;
-    UserData user;
+    UserCreator user;
+    UserAuthentication authentication;
+    UserUpdater userUpdater;
+    UserData userData;
+
     private final UpdateUserRequest request;
     private final String field;
     private final String newValue;
@@ -42,19 +49,22 @@ public class UpdateUserTest {
 
     @Before
     public void setUp() {
-        client = new UserClient();
-        user = UserDataGenerator.getRandom();
-        client.getAccessToken(client.createUser(new CreateUserRequest(user)));
+        userData = UserDataGenerator.getRandom();
+        user = new UserCreator();
+        user.createUser(new CreateUserRequest(userData));
+        authentication = new UserAuthentication();
+        authentication.loginUser(new LoginUserRequest(userData));
+        userUpdater = new UserUpdater();
     }
 
     @After
     public void tearDown() {
-        client.deleteUser();
+        userUpdater.deleteUser(authentication.getAccessToken());
     }
 
     @Test
     public void userDataCanBeUpdated() {
-        ValidatableResponse updateResponse = client.updateUserDate(request);
+        ValidatableResponse updateResponse = userUpdater.updateUserDate(request, authentication.getAccessToken());
 
         checkStatusCode(updateResponse, 200);
         parameterEqualsTo(updateResponse, "success", true);
@@ -63,8 +73,7 @@ public class UpdateUserTest {
 
     @Test
     public void userDataCanNotBeUpdatedWithoutToken() {
-        client.flushAccessToken();
-        ValidatableResponse updateResponse = client.updateUserDate(request);
+        ValidatableResponse updateResponse = userUpdater.updateUserDate(request, null);
 
         checkStatusCode(updateResponse, 401);
         parameterEqualsTo(updateResponse, "success", false);
